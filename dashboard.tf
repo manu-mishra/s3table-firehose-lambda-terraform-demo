@@ -4,6 +4,86 @@ resource "aws_cloudwatch_dashboard" "main" {
 
   dashboard_body = jsonencode({
     widgets = [
+      # ==================== SECTION: Data Ingestion ====================
+      {
+        type   = "text"
+        width  = 24
+        height = 1
+        x      = 0
+        y      = 0
+        properties = {
+          markdown = "## 📥 Data Ingestion - Lambda Data Generator\nMonitors the Lambda function that generates IoT sensor data every minute (~10,000 records/invocation)"
+        }
+      },
+      # Lambda - Invocations
+      {
+        type = "metric"
+        properties = {
+          metrics = [
+            ["AWS/Lambda", "Invocations", "FunctionName", "${var.stack_name}-data-generator", { stat = "Sum", color = "#1f77b4" }]
+          ]
+          view    = "timeSeries"
+          region  = var.region
+          title   = "Invocations"
+          period  = 60
+          stacked = false
+          yAxis   = { left = { min = 0 } }
+        }
+        width  = 8
+        height = 5
+        x      = 0
+        y      = 1
+      },
+      # Lambda - Errors
+      {
+        type = "metric"
+        properties = {
+          metrics = [
+            ["AWS/Lambda", "Errors", "FunctionName", "${var.stack_name}-data-generator", { stat = "Sum", color = "#d62728" }]
+          ]
+          view    = "timeSeries"
+          region  = var.region
+          title   = "Errors"
+          period  = 60
+          stacked = false
+          yAxis   = { left = { min = 0 } }
+        }
+        width  = 8
+        height = 5
+        x      = 8
+        y      = 1
+      },
+      # Lambda - Duration
+      {
+        type = "metric"
+        properties = {
+          metrics = [
+            ["AWS/Lambda", "Duration", "FunctionName", "${var.stack_name}-data-generator", { stat = "Average" }]
+          ]
+          view    = "timeSeries"
+          region  = var.region
+          title   = "Duration (ms)"
+          period  = 60
+          stacked = false
+          yAxis   = { left = { min = 0 } }
+        }
+        width  = 8
+        height = 5
+        x      = 16
+        y      = 1
+      },
+
+      # ==================== SECTION: Streaming Delivery ====================
+      {
+        type   = "text"
+        width  = 24
+        height = 1
+        x      = 0
+        y      = 6
+        properties = {
+          markdown = "## 🚀 Streaming Delivery - Kinesis Data Firehose\nBuffers data (5 min or 5 MB) and delivers to S3 Tables in Apache Iceberg format"
+        }
+      },
       # Firehose - Incoming Records
       {
         type = "metric"
@@ -13,17 +93,15 @@ resource "aws_cloudwatch_dashboard" "main" {
           ]
           view    = "timeSeries"
           region  = var.region
-          title   = "Firehose - Incoming Records"
+          title   = "Incoming Records"
           period  = 60
           stacked = false
-          yAxis = {
-            left = { min = 0 }
-          }
+          yAxis   = { left = { min = 0 } }
         }
         width  = 12
-        height = 6
+        height = 5
         x      = 0
-        y      = 0
+        y      = 7
       },
       # Firehose - Delivery Success/Failure
       {
@@ -35,17 +113,15 @@ resource "aws_cloudwatch_dashboard" "main" {
           ]
           view    = "timeSeries"
           region  = var.region
-          title   = "Firehose - Delivery Success/Failure"
+          title   = "Delivery Success (green) / Failure (red)"
           period  = 60
           stacked = false
-          yAxis = {
-            left = { min = 0 }
-          }
+          yAxis   = { left = { min = 0 } }
         }
         width  = 12
-        height = 6
+        height = 5
         x      = 12
-        y      = 0
+        y      = 7
       },
       # Firehose - Data Freshness
       {
@@ -56,17 +132,15 @@ resource "aws_cloudwatch_dashboard" "main" {
           ]
           view    = "timeSeries"
           region  = var.region
-          title   = "Firehose - Data Freshness (ms)"
+          title   = "Data Freshness (seconds from ingestion to delivery)"
           period  = 60
           stacked = false
-          yAxis = {
-            left = { min = 0 }
-          }
+          yAxis   = { left = { min = 0 } }
         }
         width  = 12
-        height = 6
+        height = 5
         x      = 0
-        y      = 6
+        y      = 12
       },
       # Firehose - Bytes Delivered
       {
@@ -77,122 +151,131 @@ resource "aws_cloudwatch_dashboard" "main" {
           ]
           view    = "timeSeries"
           region  = var.region
-          title   = "Firehose - Bytes Delivered"
+          title   = "Bytes Delivered to S3 Tables"
           period  = 60
           stacked = false
-          yAxis = {
-            left = { min = 0 }
-          }
+          yAxis   = { left = { min = 0 } }
         }
         width  = 12
-        height = 6
+        height = 5
         x      = 12
-        y      = 6
+        y      = 12
       },
-      # Lambda - Invocations
+
+      # ==================== SECTION: S3 Tables Storage ====================
       {
-        type = "metric"
-        properties = {
-          metrics = [
-            ["AWS/Lambda", "Invocations", "FunctionName", "${var.stack_name}-data-generator", { stat = "Sum", color = "#1f77b4" }]
-          ]
-          view    = "timeSeries"
-          region  = var.region
-          title   = "Lambda - Invocations"
-          period  = 60
-          stacked = false
-          yAxis = {
-            left = { min = 0 }
-          }
-        }
-        width  = 8
-        height = 6
+        type   = "text"
+        width  = 24
+        height = 1
         x      = 0
-        y      = 12
-      },
-      # Lambda - Errors
-      {
-        type = "metric"
+        y      = 17
         properties = {
-          metrics = [
-            ["AWS/Lambda", "Errors", "FunctionName", "${var.stack_name}-data-generator", { stat = "Sum", color = "#d62728" }]
-          ]
-          view    = "timeSeries"
-          region  = var.region
-          title   = "Lambda - Errors"
-          period  = 60
-          stacked = false
-          yAxis = {
-            left = { min = 0 }
-          }
+          markdown = "## 🗄️ S3 Tables Storage - Apache Iceberg\nAnalytics-optimized storage with automatic table maintenance and compaction"
         }
-        width  = 8
-        height = 6
-        x      = 8
-        y      = 12
-      },
-      # Lambda - Duration
-      {
-        type = "metric"
-        properties = {
-          metrics = [
-            ["AWS/Lambda", "Duration", "FunctionName", "${var.stack_name}-data-generator", { stat = "Average" }]
-          ]
-          view    = "timeSeries"
-          region  = var.region
-          title   = "Lambda - Duration (ms)"
-          period  = 60
-          stacked = false
-          yAxis = {
-            left = { min = 0 }
-          }
-        }
-        width  = 8
-        height = 6
-        x      = 16
-        y      = 12
       },
       # S3 Tables - Storage Size
       {
         type = "metric"
         properties = {
           metrics = [
-            ["AWS/S3/Tables", "TotalBucketStorage", "TableBucketName", var.stack_name, "Namespace", var.stack_name, "TableName", var.stack_name, { stat = "Sum" }]
+            ["AWS/S3/Tables", "TableBucketSizeBytes", "TableBucketName", var.stack_name, "TableName", "ALL", "StorageType", "TablesStandardStorage", "Namespace", "ALL"]
           ]
-          view    = "timeSeries"
+          view    = "singleValue"
           region  = var.region
-          title   = "S3 Tables - Storage Size (Bytes)"
-          period  = 86400
+          title   = "Total Storage Size (Bytes)"
           stacked = false
-          yAxis = {
-            left = { min = 0 }
-          }
         }
         width  = 12
-        height = 6
+        height = 3
         x      = 0
         y      = 18
       },
-      # S3 Tables - File Count
+      # S3 Tables - Object Count
       {
         type = "metric"
         properties = {
           metrics = [
-            ["AWS/S3/Tables", "TotalNumberOfFiles", "TableBucketName", var.stack_name, "Namespace", var.stack_name, "TableName", var.stack_name, { stat = "Sum" }]
+            ["AWS/S3/Tables", "TableBucketNumberOfObjects", "TableBucketName", var.stack_name, "TableName", "ALL", "StorageType", "ALL", "Namespace", "ALL"]
+          ]
+          view    = "singleValue"
+          region  = var.region
+          title   = "Total Number of Objects"
+          stacked = false
+        }
+        width  = 12
+        height = 3
+        x      = 12
+        y      = 18
+      },
+      # S3 Tables - Compaction Activity
+      {
+        type = "metric"
+        properties = {
+          metrics = [
+            ["AWS/S3/Tables", "CompactionObjectsCount_binpack", "TableBucketName", var.stack_name, "TableName", var.stack_name, "MaintenanceActivityType", "Compaction", "Namespace", var.stack_name, { id = "m1" }],
+            [".", "CompactionBytesProcessed_binpack", ".", ".", ".", ".", ".", ".", ".", ".", { id = "m2" }]
+          ]
+          view      = "singleValue"
+          region    = var.region
+          title     = "Automatic Compaction - Objects & Bytes Processed"
+          stat      = "Average"
+          stacked   = false
+          sparkline = true
+        }
+        width  = 24
+        height = 3
+        x      = 0
+        y      = 21
+      },
+
+      # ==================== SECTION: Error Monitoring ====================
+      {
+        type   = "text"
+        width  = 24
+        height = 1
+        x      = 0
+        y      = 24
+        properties = {
+          markdown = "## ⚠️ Error Monitoring - Failed Deliveries\nTracks failed records sent to error bucket. Empty = healthy pipeline!"
+        }
+      },
+      # Error Bucket - Storage Size
+      {
+        type = "metric"
+        properties = {
+          metrics = [
+            ["AWS/S3", "BucketSizeBytes", "BucketName", "${var.stack_name}-errors", "StorageType", "StandardStorage", { stat = "Average" }]
           ]
           view    = "timeSeries"
           region  = var.region
-          title   = "S3 Tables - File Count"
+          title   = "Error Bucket Size (Bytes)"
           period  = 86400
           stacked = false
-          yAxis = {
-            left = { min = 0 }
-          }
+          yAxis   = { left = { min = 0 } }
         }
         width  = 12
-        height = 6
+        height = 5
+        x      = 0
+        y      = 25
+      },
+      # Error Bucket - Object Count
+      {
+        type = "metric"
+        properties = {
+          metrics = [
+            ["AWS/S3", "NumberOfObjects", "BucketName", "${var.stack_name}-errors", "StorageType", "AllStorageTypes", { stat = "Average" }]
+          ]
+          view    = "timeSeries"
+          region  = var.region
+          title   = "Error Bucket Object Count"
+          period  = 86400
+          stacked = false
+          yAxis   = { left = { min = 0 } }
+        }
+        width  = 12
+        height = 5
         x      = 12
-        y      = 18
+        y      = 25
       }
     ]
   })

@@ -16,7 +16,7 @@ The following diagram illustrates the solution architecture:
 
 ```mermaid
 graph LR
-    A[EventBridge<br/>Every 1 minute] -->|Trigger| B[Lambda<br/>10,000 records/invocation<br/>200 records/sec × 50 sec<br/>512 MB]
+    A[EventBridge<br/>Every 1 minute] -->|Trigger| B[Lambda<br/>10K records/invocation<br/>512 MB]
     B -->|Put Records| C[Kinesis Firehose<br/>Buffer: 5 min or 5 MB]
     C -->|Write| D[S3 Tables<br/>Apache Iceberg<br/>KMS Encrypted]
     C -->|Failed Records| E[S3 Error Bucket<br/>KMS Encrypted]
@@ -37,6 +37,17 @@ The solution uses AWS services working together. **Amazon EventBridge** triggers
 **Data Flow:**
 
 Lambda generates sample IoT sensor data including sensor_id (unique identifier), timestamp (Unix timestamp in seconds), location (physical location), temperature (Celsius), humidity (percentage), and pressure (atmospheric pressure in hPa). The data generation rate is 200 records per second during Lambda execution, producing approximately 10,000 records per invocation and 600,000 records per hour across all sensors.
+
+## CloudWatch Dashboard
+
+![CloudWatch Dashboard](s3table-firehose-lambda-dashboard.png)
+
+The solution includes a comprehensive CloudWatch dashboard organized into four sections:
+
+- **📥 Data Ingestion**: Lambda invocations, errors, and duration metrics
+- **🚀 Streaming Delivery**: Firehose incoming records, delivery success/failure, data freshness, and bytes delivered
+- **🗄️ S3 Tables Storage**: Total storage size, object count, and automatic compaction activity
+- **⚠️ Error Monitoring**: Error bucket size and object count for failed deliveries
 
 ## Resources Created
 
